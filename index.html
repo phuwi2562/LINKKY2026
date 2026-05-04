@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KHAMYAI Health Portal | รพ.สต.บ้านคำใหญ่</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    * { font-family: 'Kanit', sans-serif; }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(34,197,94,.18), transparent 32%),
+        radial-gradient(circle at top right, rgba(14,165,233,.20), transparent 34%),
+        linear-gradient(135deg, #f8fafc 0%, #ecfeff 45%, #f0fdf4 100%);
+      color: #0f172a;
+    }
+
+    .glass {
+      background: rgba(255,255,255,.74);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,.65);
+      box-shadow: 0 20px 50px rgba(15,23,42,.10);
+    }
+
+    .app-card {
+      transition: all .25s ease;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(226,232,240,.85);
+    }
+
+    .app-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 20px 35px rgba(15,23,42,.12);
+      border-color: rgba(20,184,166,.55);
+    }
+
+    .category-pill.active {
+      background: linear-gradient(135deg, #059669, #0ea5e9);
+      color: white;
+      box-shadow: 0 12px 25px rgba(14,165,233,.24);
+    }
+
+    .shine {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shine::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-120%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+      animation: shine 4.5s infinite;
+    }
+
+    @keyframes shine {
+      0%, 70% { transform: translateX(-120%); }
+      100% { transform: translateX(120%); }
+    }
+
+    .floating {
+      animation: floating 4s ease-in-out infinite;
+    }
+
+    @keyframes floating {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-8">
+
+    <!-- Header -->
+    <section class="glass rounded-[2rem] p-5 md:p-8 mb-6 relative overflow-hidden">
+      <div class="absolute -right-16 -top-16 w-52 h-52 bg-emerald-200 rounded-full blur-3xl opacity-60"></div>
+      <div class="absolute -left-16 -bottom-16 w-56 h-56 bg-sky-200 rounded-full blur-3xl opacity-60"></div>
+
+      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center gap-5 justify-between">
+        <div class="flex items-center gap-4">
+          <!-- Logo กระทรวงสาธารณสุข: ใช้ URL ออนไลน์ หรือเปลี่ยนเป็นไฟล์ local เช่น logo-moph.png ได้ -->
+          <div class="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-white shadow-lg flex items-center justify-center floating overflow-hidden border border-emerald-100">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Seal_of_the_Ministry_of_Public_Health_of_Thailand.svg/512px-Seal_of_the_Ministry_of_Public_Health_of_Thailand.svg.png"
+              alt="โลโก้กระทรวงสาธารณสุข"
+              class="w-16 h-16 md:w-20 md:h-20 object-contain"
+              onerror="this.style.display='none'; document.getElementById('fallbackLogo').style.display='block';"
+            />
+            <i id="fallbackLogo" class="fa-solid fa-staff-snake text-4xl text-emerald-600 hidden"></i>
+          </div>
+
+          <div>
+            <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-sm font-medium mb-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              KHAMYAI DIGITAL HEALTH PORTAL
+            </div>
+            <h1 class="text-2xl md:text-4xl font-extrabold leading-tight text-slate-900">
+              เว็บท่า รวมลิงก์ระบบงานดิจิทัล
+            </h1>
+            <p class="text-slate-600 mt-1 md:text-lg">
+              โรงพยาบาลส่งเสริมสุขภาพตำบลบ้านคำใหญ่ สสอ.ห้วยเม็ก จังหวัดกาฬสินธุ์
+            </p>
+          </div>
+        </div>
+
+        <!-- Real-time clock -->
+        <div class="glass rounded-3xl p-4 md:p-5 min-w-full lg:min-w-[320px] text-center shine">
+          <p class="text-slate-500 text-sm">วันและเวลาปัจจุบัน</p>
+          <div id="timeNow" class="text-3xl md:text-4xl font-extrabold text-emerald-700 tracking-wide">--:--:--</div>
+          <div id="dateNow" class="text-slate-700 mt-1">กำลังโหลด...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Search and summary -->
+    <section class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-3xl p-4 lg:col-span-3">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input id="searchInput" type="text" placeholder="ค้นหาระบบ เช่น LTC, อสม., นัดหมาย, ไข้เลือดออก..."
+            class="w-full rounded-2xl border border-slate-200 bg-white/80 py-4 pl-12 pr-4 outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 transition text-base">
+        </div>
+      </div>
+      <div class="glass rounded-3xl p-4 flex items-center justify-between">
+        <div>
+          <p class="text-slate-500 text-sm">จำนวนระบบทั้งหมด</p>
+          <p class="text-3xl font-extrabold text-sky-700"><span id="totalApps">0</span> ระบบ</p>
+        </div>
+        <div class="w-14 h-14 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center text-2xl">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category filters -->
+    <section class="glass rounded-3xl p-3 md:p-4 mb-6 overflow-x-auto">
+      <div id="categoryButtons" class="flex gap-2 min-w-max"></div>
+    </section>
+
+    <!-- App cards -->
+    <section id="appGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></section>
+
+    <!-- Empty state -->
+    <section id="emptyState" class="hidden glass rounded-3xl p-10 text-center mt-6">
+      <i class="fa-regular fa-folder-open text-5xl text-slate-300 mb-3"></i>
+      <h2 class="text-xl font-bold text-slate-700">ไม่พบระบบที่ค้นหา</h2>
+      <p class="text-slate-500">ลองค้นหาด้วยคำอื่น หรือเลือกหมวดหมู่ทั้งหมด</p>
+    </section>
+
+    <!-- How to edit -->
+    <section class="glass rounded-3xl p-5 md:p-6 mt-8">
+      <div class="flex items-start gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl shrink-0">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+        <div>
+          <h2 class="text-lg md:text-xl font-bold text-slate-800">วิธีเพิ่ม/แก้ไขลิงก์ระบบ</h2>
+          <p class="text-slate-600 mt-1">
+            แก้ไขข้อมูลในตัวแปร <code class="bg-slate-100 px-2 py-1 rounded-lg">apps</code> ภายในไฟล์นี้ โดยเพิ่มชื่อระบบ หมวดหมู่ URL ไอคอน และสีได้ทันที
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+    <div class="glass rounded-[1.5rem] p-5 text-center text-slate-600">
+      <p class="font-semibold text-slate-800">
+        © <span id="yearNow"></span> งาน IT โรงพยาบาลส่งเสริมสุขภาพตำบลบ้านคำใหญ่
+      </p>
+      <p class="text-sm mt-1">สสอ.ห้วยเม็ก จังหวัดกาฬสินธุ์ | Digital Health Gateway</p>
+    </div>
+  </footer>
+
+  <script>
+    // =========================================================
+    // 1) แก้ไข/เพิ่มลิงก์ระบบได้ที่นี่
+    // category: ใช้จัดหมวดหมู่
+    // url: ใส่ลิงก์เว็บแอปจริง
+    // icon: ใช้ Font Awesome เช่น fa-solid fa-house-medical
+    // color: tailwind gradient class
+    // =========================================================
+    const apps = [
+      {
+        name: "ระบบ LTC KhamYaiCare",
+        category: "งานผู้สูงอายุ/LTC",
+        desc: "ดูแลผู้มีภาวะพึ่งพิง บันทึกเยี่ยม ประเมิน ADL และ Dashboard",
+        url: "#",
+        icon: "fa-solid fa-hand-holding-medical",
+        color: "from-violet-500 to-fuchsia-500",
+        badge: "LTC"
+      },
+      {
+        name: "ระบบประเมิน ADL ออนไลน์",
+        category: "งานผู้สูงอายุ/LTC",
+        desc: "แบบประเมินความสามารถในการดำเนินชีวิตประจำวันสำหรับ CM/CG",
+        url: "#",
+        icon: "fa-solid fa-clipboard-check",
+        color: "from-purple-500 to-indigo-500",
+        badge: "ADL"
+      },
+      {
+        name: "ระบบนัดหมาย รพ.สต.",
+        category: "บริการประชาชน",
+        desc: "บันทึกและติดตามนัดหมายผู้รับบริการ เชื่อม Google Sheet",
+        url: "#",
+        icon: "fa-solid fa-calendar-check",
+        color: "from-emerald-500 to-teal-500",
+        badge: "OPD"
+      },
+      {
+        name: "ระบบชมรม อสม.ตำบลคำใหญ่",
+        category: "อสม./ชุมชน",
+        desc: "ฐานข้อมูลสมาชิก อสม. กิจกรรม รายงาน และ Dashboard",
+        url: "#",
+        icon: "fa-solid fa-people-group",
+        color: "from-pink-500 to-rose-500",
+        badge: "VHV"
+      },
+      {
+        name: "ระบบเฝ้าระวังไข้เลือดออก",
+        category: "ควบคุมโรค",
+        desc: "รายงานผู้ป่วย HI/CI แผนที่เสี่ยง และ Epi Dashboard",
+        url: "#",
+        icon: "fa-solid fa-mosquito",
+        color: "from-red-500 to-orange-500",
+        badge: "DHF"
+      },
+      {
+        name: "Dashboard สุขภาพตำบล",
+        category: "สารสนเทศ/Dashboard",
+        desc: "ศูนย์รวมข้อมูลสุขภาพสำคัญของพื้นที่ตำบลคำใหญ่",
+        url: "#",
+        icon: "fa-solid fa-chart-line",
+        color: "from-sky-500 to-cyan-500",
+        badge: "BI"
+      },
+      {
+        name: "ระบบติดตามตู้เย็นวัคซีน IoT",
+        category: "IoT/คลังยา",
+        desc: "ติดตามอุณหภูมิแบบ real-time พร้อมแจ้งเตือนเมื่อเกินเกณฑ์",
+        url: "#",
+        icon: "fa-solid fa-temperature-low",
+        color: "from-blue-500 to-indigo-500",
+        badge: "IoT"
+      },
+      {
+        name: "เว็บไซต์ รพ.สต.บ้านคำใหญ่",
+        category: "ประชาสัมพันธ์",
+        desc: "ข่าวประชาสัมพันธ์ บริการสุขภาพ บุคลากร และช่องทางติดต่อ",
+        url: "#",
+        icon: "fa-solid fa-globe",
+        color: "from-lime-500 to-emerald-500",
+        badge: "WEB"
+      },
+      {
+        name: "ระบบสอบสวนโรค AI Report",
+        category: "ควบคุมโรค",
+        desc: "ช่วยจัดทำรายงานสอบสวนโรค วิเคราะห์ความเสี่ยง และสรุปสถานการณ์",
+        url: "#",
+        icon: "fa-solid fa-brain",
+        color: "from-slate-700 to-slate-900",
+        badge: "AI"
+      },
+      {
+        name: "ระบบเบาหวาน Stage of Change",
+        category: "NCD/โรคเรื้อรัง",
+        desc: "ประเมินขั้นความพร้อมในการปรับเปลี่ยนพฤติกรรมผู้ป่วยเบาหวาน",
+        url: "#",
+        icon: "fa-solid fa-heart-pulse",
+        color: "from-amber-500 to-orange-500",
+        badge: "NCD"
+      },
+      {
+        name: "ระบบสามหมอตำบลคำใหญ่",
+        category: "อสม./ชุมชน",
+        desc: "เชื่อมโยงหมอครอบครัว อสม. และประชาชนในพื้นที่รับผิดชอบ",
+        url: "#",
+        icon: "fa-solid fa-user-doctor",
+        color: "from-teal-500 to-emerald-500",
+        badge: "3DOC"
+      },
+      {
+        name: "Google Drive งานเอกสาร",
+        category: "เอกสาร/รายงาน",
+        desc: "คลังเอกสาร แบบฟอร์ม รายงาน และไฟล์ปฏิบัติงานสำคัญ",
+        url: "#",
+        icon: "fa-brands fa-google-drive",
+        color: "from-green-500 to-yellow-500",
+        badge: "Drive"
+      }
+    ];
+
+    let activeCategory = "ทั้งหมด";
+
+    const appGrid = document.getElementById("appGrid");
+    const categoryButtons = document.getElementById("categoryButtons");
+    const searchInput = document.getElementById("searchInput");
+    const emptyState = document.getElementById("emptyState");
+    const totalApps = document.getElementById("totalApps");
+
+    function getCategories() {
+      return ["ทั้งหมด", ...new Set(apps.map(app => app.category))];
+    }
+
+    function renderCategories() {
+      categoryButtons.innerHTML = getCategories().map(cat => `
+        <button onclick="setCategory('${cat}')"
+          class="category-pill ${activeCategory === cat ? 'active' : 'bg-white text-slate-700 hover:bg-emerald-50'}
+          px-4 py-2 rounded-2xl font-medium whitespace-nowrap transition border border-slate-100">
+          ${cat}
+        </button>
+      `).join("");
+    }
+
+    function setCategory(category) {
+      activeCategory = category;
+      renderCategories();
+      renderApps();
+    }
+
+    function renderApps() {
+      const keyword = searchInput.value.trim().toLowerCase();
+      const filtered = apps.filter(app => {
+        const matchCategory = activeCategory === "ทั้งหมด" || app.category === activeCategory;
+        const matchKeyword =
+          app.name.toLowerCase().includes(keyword) ||
+          app.category.toLowerCase().includes(keyword) ||
+          app.desc.toLowerCase().includes(keyword) ||
+          app.badge.toLowerCase().includes(keyword);
+        return matchCategory && matchKeyword;
+      });
+
+      totalApps.textContent = apps.length;
+      emptyState.classList.toggle("hidden", filtered.length > 0);
+
+      appGrid.innerHTML = filtered.map(app => `
+        <article class="app-card rounded-[1.7rem] p-5 flex flex-col min-h-[260px]">
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${app.color} text-white flex items-center justify-center text-2xl shadow-lg">
+              <i class="${app.icon}"></i>
+            </div>
+            <span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-600">${app.badge}</span>
+          </div>
+
+          <div class="flex-1">
+            <p class="text-xs text-emerald-700 font-semibold mb-1">${app.category}</p>
+            <h3 class="text-xl font-bold text-slate-900 leading-snug">${app.name}</h3>
+            <p class="text-slate-600 text-sm mt-2 leading-relaxed">${app.desc}</p>
+          </div>
+
+          <a href="${app.url}" target="_blank" rel="noopener noreferrer"
+            class="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl py-3 px-4 font-semibold text-white bg-gradient-to-r ${app.color} hover:opacity-95 transition shadow-md">
+            เข้าใช้งานระบบ
+            <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
+          </a>
+        </article>
+      `).join("");
+    }
+
+    function updateDateTime() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('th-TH', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+      const date = now.toLocaleDateString('th-TH', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+      document.getElementById("timeNow").textContent = time;
+      document.getElementById("dateNow").textContent = date;
+      document.getElementById("yearNow").textContent = now.getFullYear() + 543;
+    }
+
+    searchInput.addEventListener("input", renderApps);
+
+    renderCategories();
+    renderApps();
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+  </script>
+</body>
+</html>
