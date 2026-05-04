@@ -16,6 +16,9 @@
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <style>
     * { font-family: 'Kanit', sans-serif; }
 
@@ -54,11 +57,7 @@
       box-shadow: 0 12px 25px rgba(14,165,233,.24);
     }
 
-    .shine {
-      position: relative;
-      overflow: hidden;
-    }
-
+    .shine { position: relative; overflow: hidden; }
     .shine::after {
       content: "";
       position: absolute;
@@ -73,14 +72,16 @@
       100% { transform: translateX(120%); }
     }
 
-    .floating {
-      animation: floating 4s ease-in-out infinite;
-    }
-
+    .floating { animation: floating 4s ease-in-out infinite; }
     @keyframes floating {
       0%,100% { transform: translateY(0); }
       50% { transform: translateY(-10px); }
     }
+
+    .admin-only { display: none; }
+    body.admin-mode .admin-only { display: inline-flex; }
+    body.admin-mode .admin-panel { display: block; }
+    .admin-panel { display: none; }
   </style>
 </head>
 
@@ -94,7 +95,6 @@
 
       <div class="relative z-10 flex flex-col lg:flex-row lg:items-center gap-5 justify-between">
         <div class="flex items-center gap-4">
-          <!-- Logo กระทรวงสาธารณสุข: ใช้ URL ออนไลน์ หรือเปลี่ยนเป็นไฟล์ local เช่น logo-moph.png ได้ -->
           <div class="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-white shadow-lg flex items-center justify-center floating overflow-hidden border border-emerald-100">
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Seal_of_the_Ministry_of_Public_Health_of_Thailand.svg/512px-Seal_of_the_Ministry_of_Public_Health_of_Thailand.svg.png"
@@ -119,12 +119,43 @@
           </div>
         </div>
 
-        <!-- Real-time clock -->
-        <div class="glass rounded-3xl p-4 md:p-5 min-w-full lg:min-w-[320px] text-center shine">
-          <p class="text-slate-500 text-sm">วันและเวลาปัจจุบัน</p>
-          <div id="timeNow" class="text-3xl md:text-4xl font-extrabold text-emerald-700 tracking-wide">--:--:--</div>
-          <div id="dateNow" class="text-slate-700 mt-1">กำลังโหลด...</div>
+        <div class="flex flex-col gap-3 min-w-full lg:min-w-[320px]">
+          <div class="glass rounded-3xl p-4 md:p-5 text-center shine">
+            <p class="text-slate-500 text-sm">วันและเวลาปัจจุบัน</p>
+            <div id="timeNow" class="text-3xl md:text-4xl font-extrabold text-emerald-700 tracking-wide">--:--:--</div>
+            <div id="dateNow" class="text-slate-700 mt-1">กำลังโหลด...</div>
+          </div>
+
+          <div class="flex gap-2">
+            <button id="adminLoginBtn" onclick="adminLogin()" class="flex-1 rounded-2xl bg-slate-900 text-white py-3 px-4 font-semibold hover:bg-slate-800 transition shadow-md">
+              <i class="fa-solid fa-lock mr-2"></i>Admin Login
+            </button>
+            <button id="adminLogoutBtn" onclick="adminLogout()" class="hidden flex-1 rounded-2xl bg-rose-600 text-white py-3 px-4 font-semibold hover:bg-rose-700 transition shadow-md">
+              <i class="fa-solid fa-right-from-bracket mr-2"></i>ออกจากระบบ
+            </button>
+          </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Admin Panel -->
+    <section class="admin-panel glass rounded-[2rem] p-5 md:p-6 mb-6 border-2 border-emerald-200">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900"><i class="fa-solid fa-screwdriver-wrench text-emerald-600 mr-2"></i>Admin จัดการลิงก์ระบบ</h2>
+          <p class="text-slate-600">เพิ่ม แก้ไข ลบ และรีเซ็ตลิงก์ผ่านหน้าเว็บได้ทันที</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="openAppForm()" class="rounded-2xl bg-emerald-600 text-white px-4 py-3 font-semibold hover:bg-emerald-700 transition">
+            <i class="fa-solid fa-plus mr-2"></i>เพิ่มระบบใหม่
+          </button>
+          <button onclick="resetApps()" class="rounded-2xl bg-amber-500 text-white px-4 py-3 font-semibold hover:bg-amber-600 transition">
+            <i class="fa-solid fa-rotate-left mr-2"></i>รีเซ็ตค่าเดิม
+          </button>
+        </div>
+      </div>
+      <div class="bg-white/80 rounded-3xl overflow-hidden border border-slate-200">
+        <div id="adminTable" class="overflow-x-auto"></div>
       </div>
     </section>
 
@@ -172,7 +203,7 @@
         <div>
           <h2 class="text-lg md:text-xl font-bold text-slate-800">วิธีเพิ่ม/แก้ไขลิงก์ระบบ</h2>
           <p class="text-slate-600 mt-1">
-            แก้ไขข้อมูลในตัวแปร <code class="bg-slate-100 px-2 py-1 rounded-lg">apps</code> ภายในไฟล์นี้ โดยเพิ่มชื่อระบบ หมวดหมู่ URL ไอคอน และสีได้ทันที
+            กด <b>Admin Login</b> แล้วใส่รหัสผ่าน จากนั้นสามารถเพิ่ม แก้ไข หรือลบลิงก์ผ่านหน้าเว็บได้เลย ข้อมูลจะบันทึกไว้ในเครื่องนี้โดยอัตโนมัติ
           </p>
         </div>
       </div>
@@ -190,124 +221,26 @@
   </footer>
 
   <script>
-    // =========================================================
-    // 1) แก้ไข/เพิ่มลิงก์ระบบได้ที่นี่
-    // category: ใช้จัดหมวดหมู่
-    // url: ใส่ลิงก์เว็บแอปจริง
-    // icon: ใช้ Font Awesome เช่น fa-solid fa-house-medical
-    // color: tailwind gradient class
-    // =========================================================
-    const apps = [
-      {
-        name: "ระบบ LTC KhamYaiCare",
-        category: "งานผู้สูงอายุ/LTC",
-        desc: "ดูแลผู้มีภาวะพึ่งพิง บันทึกเยี่ยม ประเมิน ADL และ Dashboard",
-        url: "#",
-        icon: "fa-solid fa-hand-holding-medical",
-        color: "from-violet-500 to-fuchsia-500",
-        badge: "LTC"
-      },
-      {
-        name: "ระบบประเมิน ADL ออนไลน์",
-        category: "งานผู้สูงอายุ/LTC",
-        desc: "แบบประเมินความสามารถในการดำเนินชีวิตประจำวันสำหรับ CM/CG",
-        url: "#",
-        icon: "fa-solid fa-clipboard-check",
-        color: "from-purple-500 to-indigo-500",
-        badge: "ADL"
-      },
-      {
-        name: "ระบบนัดหมาย รพ.สต.",
-        category: "บริการประชาชน",
-        desc: "บันทึกและติดตามนัดหมายผู้รับบริการ เชื่อม Google Sheet",
-        url: "#",
-        icon: "fa-solid fa-calendar-check",
-        color: "from-emerald-500 to-teal-500",
-        badge: "OPD"
-      },
-      {
-        name: "ระบบชมรม อสม.ตำบลคำใหญ่",
-        category: "อสม./ชุมชน",
-        desc: "ฐานข้อมูลสมาชิก อสม. กิจกรรม รายงาน และ Dashboard",
-        url: "#",
-        icon: "fa-solid fa-people-group",
-        color: "from-pink-500 to-rose-500",
-        badge: "VHV"
-      },
-      {
-        name: "ระบบเฝ้าระวังไข้เลือดออก",
-        category: "ควบคุมโรค",
-        desc: "รายงานผู้ป่วย HI/CI แผนที่เสี่ยง และ Epi Dashboard",
-        url: "#",
-        icon: "fa-solid fa-mosquito",
-        color: "from-red-500 to-orange-500",
-        badge: "DHF"
-      },
-      {
-        name: "Dashboard สุขภาพตำบล",
-        category: "สารสนเทศ/Dashboard",
-        desc: "ศูนย์รวมข้อมูลสุขภาพสำคัญของพื้นที่ตำบลคำใหญ่",
-        url: "#",
-        icon: "fa-solid fa-chart-line",
-        color: "from-sky-500 to-cyan-500",
-        badge: "BI"
-      },
-      {
-        name: "ระบบติดตามตู้เย็นวัคซีน IoT",
-        category: "IoT/คลังยา",
-        desc: "ติดตามอุณหภูมิแบบ real-time พร้อมแจ้งเตือนเมื่อเกินเกณฑ์",
-        url: "#",
-        icon: "fa-solid fa-temperature-low",
-        color: "from-blue-500 to-indigo-500",
-        badge: "IoT"
-      },
-      {
-        name: "เว็บไซต์ รพ.สต.บ้านคำใหญ่",
-        category: "ประชาสัมพันธ์",
-        desc: "ข่าวประชาสัมพันธ์ บริการสุขภาพ บุคลากร และช่องทางติดต่อ",
-        url: "#",
-        icon: "fa-solid fa-globe",
-        color: "from-lime-500 to-emerald-500",
-        badge: "WEB"
-      },
-      {
-        name: "ระบบสอบสวนโรค AI Report",
-        category: "ควบคุมโรค",
-        desc: "ช่วยจัดทำรายงานสอบสวนโรค วิเคราะห์ความเสี่ยง และสรุปสถานการณ์",
-        url: "#",
-        icon: "fa-solid fa-brain",
-        color: "from-slate-700 to-slate-900",
-        badge: "AI"
-      },
-      {
-        name: "ระบบเบาหวาน Stage of Change",
-        category: "NCD/โรคเรื้อรัง",
-        desc: "ประเมินขั้นความพร้อมในการปรับเปลี่ยนพฤติกรรมผู้ป่วยเบาหวาน",
-        url: "#",
-        icon: "fa-solid fa-heart-pulse",
-        color: "from-amber-500 to-orange-500",
-        badge: "NCD"
-      },
-      {
-        name: "ระบบสามหมอตำบลคำใหญ่",
-        category: "อสม./ชุมชน",
-        desc: "เชื่อมโยงหมอครอบครัว อสม. และประชาชนในพื้นที่รับผิดชอบ",
-        url: "#",
-        icon: "fa-solid fa-user-doctor",
-        color: "from-teal-500 to-emerald-500",
-        badge: "3DOC"
-      },
-      {
-        name: "Google Drive งานเอกสาร",
-        category: "เอกสาร/รายงาน",
-        desc: "คลังเอกสาร แบบฟอร์ม รายงาน และไฟล์ปฏิบัติงานสำคัญ",
-        url: "#",
-        icon: "fa-brands fa-google-drive",
-        color: "from-green-500 to-yellow-500",
-        badge: "Drive"
-      }
+    const ADMIN_PASSWORD = "pcu05374ky2512";
+    const STORAGE_KEY = "khamyai_health_portal_apps_v1";
+    const ADMIN_KEY = "khamyai_health_portal_admin_logged_in";
+
+    const defaultApps = [
+      { name: "ระบบ LTC KhamYaiCare", category: "งานผู้สูงอายุ/LTC", desc: "ดูแลผู้มีภาวะพึ่งพิง บันทึกเยี่ยม ประเมิน ADL และ Dashboard", url: "#", icon: "fa-solid fa-hand-holding-medical", color: "from-violet-500 to-fuchsia-500", badge: "LTC" },
+      { name: "ระบบประเมิน ADL ออนไลน์", category: "งานผู้สูงอายุ/LTC", desc: "แบบประเมินความสามารถในการดำเนินชีวิตประจำวันสำหรับ CM/CG", url: "#", icon: "fa-solid fa-clipboard-check", color: "from-purple-500 to-indigo-500", badge: "ADL" },
+      { name: "ระบบนัดหมาย รพ.สต.", category: "บริการประชาชน", desc: "บันทึกและติดตามนัดหมายผู้รับบริการ เชื่อม Google Sheet", url: "#", icon: "fa-solid fa-calendar-check", color: "from-emerald-500 to-teal-500", badge: "OPD" },
+      { name: "ระบบชมรม อสม.ตำบลคำใหญ่", category: "อสม./ชุมชน", desc: "ฐานข้อมูลสมาชิก อสม. กิจกรรม รายงาน และ Dashboard", url: "#", icon: "fa-solid fa-people-group", color: "from-pink-500 to-rose-500", badge: "VHV" },
+      { name: "ระบบเฝ้าระวังไข้เลือดออก", category: "ควบคุมโรค", desc: "รายงานผู้ป่วย HI/CI แผนที่เสี่ยง และ Epi Dashboard", url: "#", icon: "fa-solid fa-mosquito", color: "from-red-500 to-orange-500", badge: "DHF" },
+      { name: "Dashboard สุขภาพตำบล", category: "สารสนเทศ/Dashboard", desc: "ศูนย์รวมข้อมูลสุขภาพสำคัญของพื้นที่ตำบลคำใหญ่", url: "#", icon: "fa-solid fa-chart-line", color: "from-sky-500 to-cyan-500", badge: "BI" },
+      { name: "ระบบติดตามตู้เย็นวัคซีน IoT", category: "IoT/คลังยา", desc: "ติดตามอุณหภูมิแบบ real-time พร้อมแจ้งเตือนเมื่อเกินเกณฑ์", url: "#", icon: "fa-solid fa-temperature-low", color: "from-blue-500 to-indigo-500", badge: "IoT" },
+      { name: "เว็บไซต์ รพ.สต.บ้านคำใหญ่", category: "ประชาสัมพันธ์", desc: "ข่าวประชาสัมพันธ์ บริการสุขภาพ บุคลากร และช่องทางติดต่อ", url: "#", icon: "fa-solid fa-globe", color: "from-lime-500 to-emerald-500", badge: "WEB" },
+      { name: "ระบบสอบสวนโรค AI Report", category: "ควบคุมโรค", desc: "ช่วยจัดทำรายงานสอบสวนโรค วิเคราะห์ความเสี่ยง และสรุปสถานการณ์", url: "#", icon: "fa-solid fa-brain", color: "from-slate-700 to-slate-900", badge: "AI" },
+      { name: "ระบบเบาหวาน Stage of Change", category: "NCD/โรคเรื้อรัง", desc: "ประเมินขั้นความพร้อมในการปรับเปลี่ยนพฤติกรรมผู้ป่วยเบาหวาน", url: "#", icon: "fa-solid fa-heart-pulse", color: "from-amber-500 to-orange-500", badge: "NCD" },
+      { name: "ระบบสามหมอตำบลคำใหญ่", category: "อสม./ชุมชน", desc: "เชื่อมโยงหมอครอบครัว อสม. และประชาชนในพื้นที่รับผิดชอบ", url: "#", icon: "fa-solid fa-user-doctor", color: "from-teal-500 to-emerald-500", badge: "3DOC" },
+      { name: "Google Drive งานเอกสาร", category: "เอกสาร/รายงาน", desc: "คลังเอกสาร แบบฟอร์ม รายงาน และไฟล์ปฏิบัติงานสำคัญ", url: "#", icon: "fa-brands fa-google-drive", color: "from-green-500 to-yellow-500", badge: "Drive" }
     ];
 
+    let apps = loadApps();
     let activeCategory = "ทั้งหมด";
 
     const appGrid = document.getElementById("appGrid");
@@ -315,6 +248,61 @@
     const searchInput = document.getElementById("searchInput");
     const emptyState = document.getElementById("emptyState");
     const totalApps = document.getElementById("totalApps");
+    const adminLoginBtn = document.getElementById("adminLoginBtn");
+    const adminLogoutBtn = document.getElementById("adminLogoutBtn");
+
+    function loadApps() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : [...defaultApps];
+      } catch (error) {
+        return [...defaultApps];
+      }
+    }
+
+    function saveApps() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
+    }
+
+    function isAdmin() {
+      return sessionStorage.getItem(ADMIN_KEY) === "yes";
+    }
+
+    function applyAdminMode() {
+      document.body.classList.toggle("admin-mode", isAdmin());
+      adminLoginBtn.classList.toggle("hidden", isAdmin());
+      adminLogoutBtn.classList.toggle("hidden", !isAdmin());
+      renderAdminTable();
+    }
+
+    async function adminLogin() {
+      const { value: password } = await Swal.fire({
+        title: "เข้าสู่ระบบ Admin",
+        input: "password",
+        inputLabel: "รหัสผ่านผู้ดูแลระบบ",
+        inputPlaceholder: "กรอกรหัสผ่าน",
+        confirmButtonText: "เข้าสู่ระบบ",
+        cancelButtonText: "ยกเลิก",
+        showCancelButton: true,
+        confirmButtonColor: "#059669"
+      });
+
+      if (!password) return;
+
+      if (password === ADMIN_PASSWORD) {
+        sessionStorage.setItem(ADMIN_KEY, "yes");
+        applyAdminMode();
+        Swal.fire({ icon: "success", title: "เข้าสู่ระบบสำเร็จ", text: "สามารถแก้ไขลิงก์ผ่านหน้าเว็บได้แล้ว", confirmButtonColor: "#059669" });
+      } else {
+        Swal.fire({ icon: "error", title: "รหัสผ่านไม่ถูกต้อง", text: "กรุณาตรวจสอบอีกครั้ง", confirmButtonColor: "#dc2626" });
+      }
+    }
+
+    function adminLogout() {
+      sessionStorage.removeItem(ADMIN_KEY);
+      applyAdminMode();
+      Swal.fire({ icon: "success", title: "ออกจากระบบแล้ว", timer: 1200, showConfirmButton: false });
+    }
 
     function getCategories() {
       return ["ทั้งหมด", ...new Set(apps.map(app => app.category))];
@@ -322,10 +310,10 @@
 
     function renderCategories() {
       categoryButtons.innerHTML = getCategories().map(cat => `
-        <button onclick="setCategory('${cat}')"
+        <button onclick="setCategory('${escapeJs(cat)}')"
           class="category-pill ${activeCategory === cat ? 'active' : 'bg-white text-slate-700 hover:bg-emerald-50'}
           px-4 py-2 rounded-2xl font-medium whitespace-nowrap transition border border-slate-100">
-          ${cat}
+          ${escapeHtml(cat)}
         </button>
       `).join("");
     }
@@ -351,28 +339,197 @@
       totalApps.textContent = apps.length;
       emptyState.classList.toggle("hidden", filtered.length > 0);
 
-      appGrid.innerHTML = filtered.map(app => `
-        <article class="app-card rounded-[1.7rem] p-5 flex flex-col min-h-[260px]">
-          <div class="flex items-start justify-between gap-3 mb-4">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${app.color} text-white flex items-center justify-center text-2xl shadow-lg">
-              <i class="${app.icon}"></i>
+      appGrid.innerHTML = filtered.map((app) => {
+        const realIndex = apps.indexOf(app);
+        return `
+          <article class="app-card rounded-[1.7rem] p-5 flex flex-col min-h-[260px]">
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${app.color} text-white flex items-center justify-center text-2xl shadow-lg">
+                <i class="${app.icon}"></i>
+              </div>
+              <span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-600">${escapeHtml(app.badge)}</span>
             </div>
-            <span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-600">${app.badge}</span>
-          </div>
 
-          <div class="flex-1">
-            <p class="text-xs text-emerald-700 font-semibold mb-1">${app.category}</p>
-            <h3 class="text-xl font-bold text-slate-900 leading-snug">${app.name}</h3>
-            <p class="text-slate-600 text-sm mt-2 leading-relaxed">${app.desc}</p>
-          </div>
+            <div class="flex-1">
+              <p class="text-xs text-emerald-700 font-semibold mb-1">${escapeHtml(app.category)}</p>
+              <h3 class="text-xl font-bold text-slate-900 leading-snug">${escapeHtml(app.name)}</h3>
+              <p class="text-slate-600 text-sm mt-2 leading-relaxed">${escapeHtml(app.desc)}</p>
+            </div>
 
-          <a href="${app.url}" target="_blank" rel="noopener noreferrer"
-            class="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl py-3 px-4 font-semibold text-white bg-gradient-to-r ${app.color} hover:opacity-95 transition shadow-md">
-            เข้าใช้งานระบบ
-            <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
-          </a>
-        </article>
-      `).join("");
+            <a href="${escapeAttr(app.url)}" target="_blank" rel="noopener noreferrer"
+              class="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl py-3 px-4 font-semibold text-white bg-gradient-to-r ${app.color} hover:opacity-95 transition shadow-md">
+              เข้าใช้งานระบบ
+              <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
+            </a>
+
+            <div class="admin-only mt-3 gap-2">
+              <button onclick="openAppForm(${realIndex})" class="flex-1 rounded-xl bg-sky-600 text-white py-2 px-3 text-sm font-semibold hover:bg-sky-700 transition">
+                <i class="fa-solid fa-pen mr-1"></i>แก้ไข
+              </button>
+              <button onclick="deleteApp(${realIndex})" class="flex-1 rounded-xl bg-rose-600 text-white py-2 px-3 text-sm font-semibold hover:bg-rose-700 transition">
+                <i class="fa-solid fa-trash mr-1"></i>ลบ
+              </button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderAdminTable() {
+      const adminTable = document.getElementById("adminTable");
+      if (!adminTable || !isAdmin()) return;
+
+      adminTable.innerHTML = `
+        <table class="w-full text-sm text-left">
+          <thead class="bg-slate-100 text-slate-700">
+            <tr>
+              <th class="p-3 whitespace-nowrap">ชื่อระบบ</th>
+              <th class="p-3 whitespace-nowrap">หมวดหมู่</th>
+              <th class="p-3 whitespace-nowrap">URL</th>
+              <th class="p-3 whitespace-nowrap text-center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${apps.map((app, index) => `
+              <tr class="border-t border-slate-100 hover:bg-emerald-50/50">
+                <td class="p-3 font-semibold text-slate-800 min-w-[220px]">${escapeHtml(app.name)}</td>
+                <td class="p-3 min-w-[160px]">${escapeHtml(app.category)}</td>
+                <td class="p-3 min-w-[240px] text-sky-700 truncate max-w-[300px]">${escapeHtml(app.url)}</td>
+                <td class="p-3 text-center min-w-[160px]">
+                  <button onclick="openAppForm(${index})" class="rounded-xl bg-sky-600 text-white px-3 py-2 hover:bg-sky-700 transition mr-1"><i class="fa-solid fa-pen"></i></button>
+                  <button onclick="deleteApp(${index})" class="rounded-xl bg-rose-600 text-white px-3 py-2 hover:bg-rose-700 transition"><i class="fa-solid fa-trash"></i></button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function openAppForm(index = null) {
+      if (!isAdmin()) return adminLogin();
+
+      const isEdit = index !== null;
+      const app = isEdit ? apps[index] : {
+        name: "", category: "", desc: "", url: "#", icon: "fa-solid fa-link", color: "from-emerald-500 to-teal-500", badge: "NEW"
+      };
+
+      const { value: formValues } = await Swal.fire({
+        title: isEdit ? "แก้ไขลิงก์ระบบ" : "เพิ่มลิงก์ระบบใหม่",
+        html: `
+          <div class="text-left space-y-3">
+            <input id="swal-name" class="swal2-input" placeholder="ชื่อระบบ" value="${escapeAttr(app.name)}">
+            <input id="swal-category" class="swal2-input" placeholder="หมวดหมู่" value="${escapeAttr(app.category)}">
+            <textarea id="swal-desc" class="swal2-textarea" placeholder="คำอธิบายระบบ">${escapeHtml(app.desc)}</textarea>
+            <input id="swal-url" class="swal2-input" placeholder="URL เช่น https://..." value="${escapeAttr(app.url)}">
+            <input id="swal-badge" class="swal2-input" placeholder="Badge เช่น LTC, OPD" value="${escapeAttr(app.badge)}">
+            <input id="swal-icon" class="swal2-input" placeholder="Font Awesome icon เช่น fa-solid fa-link" value="${escapeAttr(app.icon)}">
+            <select id="swal-color" class="swal2-input">
+              ${colorOptions(app.color)}
+            </select>
+            <p class="text-xs text-slate-500 px-2">ตัวอย่าง Icon: fa-solid fa-heart-pulse, fa-solid fa-calendar-check, fa-solid fa-chart-line</p>
+          </div>
+        `,
+        width: 720,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: isEdit ? "บันทึกการแก้ไข" : "เพิ่มระบบ",
+        cancelButtonText: "ยกเลิก",
+        confirmButtonColor: "#059669",
+        preConfirm: () => {
+          const data = {
+            name: document.getElementById("swal-name").value.trim(),
+            category: document.getElementById("swal-category").value.trim(),
+            desc: document.getElementById("swal-desc").value.trim(),
+            url: document.getElementById("swal-url").value.trim() || "#",
+            badge: document.getElementById("swal-badge").value.trim() || "APP",
+            icon: document.getElementById("swal-icon").value.trim() || "fa-solid fa-link",
+            color: document.getElementById("swal-color").value
+          };
+
+          if (!data.name || !data.category || !data.desc) {
+            Swal.showValidationMessage("กรุณากรอกชื่อระบบ หมวดหมู่ และคำอธิบาย");
+            return false;
+          }
+          return data;
+        }
+      });
+
+      if (!formValues) return;
+
+      if (isEdit) apps[index] = formValues;
+      else apps.push(formValues);
+
+      saveApps();
+      activeCategory = "ทั้งหมด";
+      refreshAll();
+      Swal.fire({ icon: "success", title: "บันทึกสำเร็จ", timer: 1300, showConfirmButton: false });
+    }
+
+    async function deleteApp(index) {
+      if (!isAdmin()) return adminLogin();
+
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "ยืนยันการลบ",
+        text: `ต้องการลบ “${apps[index].name}” ใช่หรือไม่?`,
+        showCancelButton: true,
+        confirmButtonText: "ลบ",
+        cancelButtonText: "ยกเลิก",
+        confirmButtonColor: "#dc2626"
+      });
+
+      if (result.isConfirmed) {
+        apps.splice(index, 1);
+        saveApps();
+        refreshAll();
+        Swal.fire({ icon: "success", title: "ลบแล้ว", timer: 1200, showConfirmButton: false });
+      }
+    }
+
+    async function resetApps() {
+      if (!isAdmin()) return adminLogin();
+
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "รีเซ็ตข้อมูลทั้งหมด?",
+        text: "ระบบจะกลับไปใช้รายการลิงก์ตั้งต้น",
+        showCancelButton: true,
+        confirmButtonText: "รีเซ็ต",
+        cancelButtonText: "ยกเลิก",
+        confirmButtonColor: "#f59e0b"
+      });
+
+      if (result.isConfirmed) {
+        apps = [...defaultApps];
+        saveApps();
+        activeCategory = "ทั้งหมด";
+        refreshAll();
+        Swal.fire({ icon: "success", title: "รีเซ็ตเรียบร้อย", timer: 1200, showConfirmButton: false });
+      }
+    }
+
+    function colorOptions(selected) {
+      const options = [
+        ["from-emerald-500 to-teal-500", "เขียวมรกต"],
+        ["from-sky-500 to-cyan-500", "ฟ้า Dashboard"],
+        ["from-violet-500 to-fuchsia-500", "ม่วง LTC"],
+        ["from-purple-500 to-indigo-500", "ม่วงน้ำเงิน"],
+        ["from-pink-500 to-rose-500", "ชมพู อสม."],
+        ["from-red-500 to-orange-500", "แดงควบคุมโรค"],
+        ["from-amber-500 to-orange-500", "ส้ม NCD"],
+        ["from-blue-500 to-indigo-500", "น้ำเงิน IoT"],
+        ["from-lime-500 to-emerald-500", "เขียวประชาสัมพันธ์"],
+        ["from-slate-700 to-slate-900", "ดำ AI/ผู้ดูแล"]
+      ];
+
+      return options.map(([value, label]) => `<option value="${value}" ${value === selected ? "selected" : ""}>${label}</option>`).join("");
+    }
+
+    function refreshAll() {
+      renderCategories();
+      renderApps();
+      renderAdminTable();
     }
 
     function updateDateTime() {
@@ -388,11 +545,28 @@
       document.getElementById("yearNow").textContent = now.getFullYear() + 543;
     }
 
+    function escapeHtml(text = "") {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttr(text = "") {
+      return escapeHtml(text).replaceAll("`", "&#096;");
+    }
+
+    function escapeJs(text = "") {
+      return String(text).replaceAll("\\", "\\\\").replaceAll("'", "\\'").replaceAll("\n", " ");
+    }
+
     searchInput.addEventListener("input", renderApps);
 
-    renderCategories();
-    renderApps();
+    refreshAll();
     updateDateTime();
+    applyAdminMode();
     setInterval(updateDateTime, 1000);
   </script>
 </body>
