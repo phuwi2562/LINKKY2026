@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#059669" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="KHAMYAI" />
   <title>KHAMYAI Health Portal | รพ.สต.บ้านคำใหญ่</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -134,6 +142,21 @@
               <i class="fa-solid fa-right-from-bracket mr-2"></i>ออกจากระบบ
             </button>
           </div>
+
+          <div id="installPanel" class="hidden rounded-3xl bg-emerald-600 text-white p-4 shadow-lg">
+            <div class="flex items-start gap-3">
+              <div class="w-11 h-11 shrink-0 rounded-2xl bg-white/20 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="font-bold">ติดตั้งไว้บนหน้าจอมือถือ</p>
+                <p id="installHint" class="text-emerald-50 text-sm mt-0.5">เปิดใช้งานระบบได้สะดวกเหมือนแอป</p>
+              </div>
+            </div>
+            <button id="installBtn" type="button" class="mt-3 w-full rounded-2xl bg-white text-emerald-700 py-3 px-4 font-semibold hover:bg-emerald-50 transition">
+              <i class="fa-solid fa-download mr-2"></i><span id="installBtnText">ติดตั้งบนหน้าจอ</span>
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -221,6 +244,94 @@
   </footer>
 
   <script>
+    let deferredInstallPrompt = null;
+
+    function isIOSDevice() {
+      return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
+
+    function isStandaloneApp() {
+      return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    }
+
+    function updateInstallPanel() {
+      const panel = document.getElementById("installPanel");
+      const buttonText = document.getElementById("installBtnText");
+      const hint = document.getElementById("installHint");
+
+      if (isStandaloneApp()) {
+        panel.classList.add("hidden");
+        return;
+      }
+
+      if (deferredInstallPrompt) {
+        buttonText.textContent = "ติดตั้งบนหน้าจอ";
+        hint.textContent = "แตะครั้งเดียวเพื่อติดตั้งและเปิดใช้งานได้รวดเร็ว";
+        panel.classList.remove("hidden");
+        return;
+      }
+
+      if (isIOSDevice()) {
+        buttonText.textContent = "วิธีติดตั้งบน iPhone / iPad";
+        hint.textContent = "เพิ่มไอคอนผ่านเมนูแชร์ของ Safari";
+        panel.classList.remove("hidden");
+        return;
+      }
+
+      panel.classList.add("hidden");
+    }
+
+    async function installApp() {
+      if (isIOSDevice() && !deferredInstallPrompt) {
+        await Swal.fire({
+          icon: "info",
+          title: "ติดตั้งบน iPhone / iPad",
+          html: "เปิดหน้านี้ด้วย <b>Safari</b><br>แตะปุ่ม <b>แชร์</b> <i class='fa-solid fa-arrow-up-from-bracket'></i><br>แล้วเลือก <b>เพิ่มไปยังหน้าจอโฮม</b>",
+          confirmButtonText: "เข้าใจแล้ว",
+          confirmButtonColor: "#059669"
+        });
+        return;
+      }
+
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      updateInstallPanel();
+
+      if (outcome === "accepted") {
+        Swal.fire({
+          icon: "success",
+          title: "ติดตั้งเรียบร้อย",
+          text: "เปิด KHAMYAI Health Portal จากหน้าจอมือถือได้เลย",
+          timer: 1800,
+          showConfirmButton: false
+        });
+      }
+    }
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      updateInstallPanel();
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      updateInstallPanel();
+    });
+
+    document.getElementById("installBtn").addEventListener("click", installApp);
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch((error) => {
+          console.warn("Service worker registration failed:", error);
+        });
+      });
+    }
+
     const ADMIN_PASSWORD = "pcu05374ky2512";
     const STORAGE_KEY = "khamyai_health_portal_apps_v1";
     const ADMIN_KEY = "khamyai_health_portal_admin_logged_in";
@@ -567,6 +678,7 @@
     refreshAll();
     updateDateTime();
     applyAdminMode();
+    updateInstallPanel();
     setInterval(updateDateTime, 1000);
   </script>
 </body>
